@@ -1,0 +1,10 @@
+CREATE DATABASE IF NOT EXISTS estoque_db;
+USE estoque_db;
+
+CREATE TABLE IF NOT EXISTS usuario (
+    id     INT AUTO_INCREMENT PRIMARY KEY,
+    nome   VARCHAR(100) NOT NULL,
+    email  VARCHAR(100) NOT NULL UNIQUE,
+    senha  VARCHAR(100) NOT NULL,
+    perfil VARCHAR(50)  NOT NULL
+);
