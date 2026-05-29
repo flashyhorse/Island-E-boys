@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque Pro - Funcional Completo</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        #relogio-fixo {
+        position: fixed;      /* Fixa o elemento na tela */
+        bottom: 20px;         /* Distância do fundo */
+        right: 20px;          /* Distância da direita */
+        z-index: 9999;        /* Garante que fique acima de outros elementos */
+        
+        /* Estilização visual (opcional) */
+        background-color: #e06922;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* VARIÁVEIS E BASE */
+        :root { --cor-primaria: #f47b36; --cor-primaria-hover: #e06922; --cor-fundo: #f0f2f5; --cor-texto: #333; --cor-texto-mutado: #666; --cor-borda: #e4e6eb; --cor-sucesso: #10b981; --cor-perigo: #ef4444; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--cor-fundo); color: var(--cor-texto); }
+
+        /* LAYOUT PRINCIPAL */
+        .topbar { background-color: var(--cor-primaria); color: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .topbar h1 { font-size: 20px; font-weight: 600; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .search-box { position: relative; width: 300px; }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; }
+        .search-box input { width: 100%; padding: 10px 10px 10px 35px; border: 1px solid var(--cor-borda); border-radius: 6px; outline: none; }
+        .btn-adicionar { background-color: var(--cor-primaria); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+
+        /* TABELA */
+        .table-card { background-color: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        thead { background-color: #f8fafc; border-bottom: 2px solid var(--cor-borda); }
+        th { padding: 16px 15px; font-size: 13px; color: var(--cor-texto-mutado); text-transform: uppercase; text-align: left; }
+        td { padding: 16px 15px; font-size: 14px; border-bottom: 1px solid var(--cor-borda); }
+        .img-produto { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background-color: #eee; display: block;}
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-normal { background-color: #d1fae5; color: #065f46; }
+        .badge-alerta { background-color: #fee2e2; color: #991b1b; }
+        .coluna-acoes { text-align: right; white-space: nowrap; }
+        .btn-icon { background: transparent; border: none; color: #a1a1aa; font-size: 16px; cursor: pointer; margin-left: 10px; transition: 0.2s; }
+        .btn-icon.btn-editar:hover { color: var(--cor-sucesso); transform: scale(1.1); }
+        .btn-icon.btn-excluir:hover { color: var(--cor-perigo); transform: scale(1.1); }
+        .td-data { font-size: 13px; color: var(--cor-texto-mutado); } /* Fonte um pouco menor para datas */
+
+        /* MODAL E FORMULÁRIO */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
+        .modal-content { background-color: white; width: 100%; max-width: 600px; border-radius: 12px; padding: 30px; position: relative; animation: animarModal 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
+        @keyframes animarModal { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--cor-borda); padding-bottom: 15px; }
+        .btn-close-modal { background: none; border: none; font-size: 20px; color: #999; cursor: pointer; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .full-width { grid-column: span 2; }
+        .form-group label { font-size: 13px; font-weight: 600; color: var(--cor-texto-mutado); }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--cor-borda); border-radius: 6px; outline: none; font-family: inherit; }
+        .modal-footer { margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-cancelar { background: #eee; color: #666; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-salvar { background: var(--cor-primaria); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+        /* UPLOAD */
+        .upload-area { border: 2px dashed var(--cor-borda); border-radius: 8px; padding: 10px; text-align: center; background-color: #fafafa; cursor: pointer; transition: all 0.3s; display: flex; justify-content: center; align-items: center; position: relative; min-height: 100px; }
+        .upload-area:hover { border-color: var(--cor-primaria); background-color: #fff3ed; }
+        .upload-content { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--cor-texto-mutado); }
+        .upload-content i { font-size: 24px; color: var(--cor-primaria); }
+        .upload-content p { font-size: 13px; }
+        #img-preview { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; display: none; }
+        .input-file-escondido { display: none; }
+        .btn-limpar-foto { position: absolute; top: 5px; right: 5px; background-color: rgba(239, 68, 68, 0.8); color: white; border: none; border-radius: 50%; width: 25px; height: 25px; font-size: 12px; cursor: pointer; display: none; z-index: 10; }
+        .upload-area:hover .btn-limpar-foto { display: block; }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <h1>Gerenciamento de Estoque</h1>
+        <div class="topbar-info">Admin | <span id="data-topo"></span></div>
+    </header>
+
+    <main class="container">
+        <div class="toolbar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="input-pesquisa" placeholder="Pesquisar ID, Produto ou Local...">
+            </div>
+            <button class="btn-adicionar" onclick="abrirModalAdicionar()">
+                <i class="fa-solid fa-plus"></i> Adicionar Produto
+            </button>
+        </div>
+
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>ID</th>
+                        <th>Produto</th>
+                        <th>Preço</th>
+                        <th>Qtd</th>
+                        <th>Localização</th>
+                        <th>Entrada</th>
+                        <th>Saída</th>
+                        <th class="coluna-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-produtos">
+                    <tr data-entrada="2026-05-28T08:30" data-saida="">
+                        <td><img src="https://via.placeholder.com/40" class="img-produto" alt="Placeholder"></td>
+                        <td class="td-id"><strong>0058</strong></td>
+                        <td class="td-nome">Notebook Pro</td>
+                        <td class="td-preco">R$ 4500,00</td>
+                        <td class="td-qtd"><span class="badge badge-normal">12 un.</span></td>
+                        <td class="td-local">Galpão 12</td>
+                        <td class="td-entrada td-data">28/05/2026 08:30</td>
+                        <td class="td-saida td-data">-</td>
+                        <td class="coluna-acoes">
+                            <button class="btn-icon btn-editar" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn-icon btn-excluir" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                    <tr data-entrada="2026-05-20T14:15" data-saida="2026-05-27T16:45">
+                        <td><img src="https://via.placeholder.com/40" class="img-produto" alt="Placeholder"></td>
+                        <td class="td-id"><strong>0022</strong></td>
+                        <td class="td-nome">Mouse Sem Fio</td>
+                        <td class="td-preco">R$ 58,00</td>
+                        <td class="td-qtd"><span class="badge badge-alerta">3 un.</span></td>
+                        <td class="td-local">Galpão 06</td>
+                        <td class="td-entrada td-data">20/05/2026 14:15</td>
+                        <td class="td-saida td-data">27/05/2026 16:45</td>
+                        <td class="coluna-acoes">
+                            <button class="btn-icon btn-editar" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn-icon btn-excluir" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-titulo"><i class="fa-solid fa-box-open" style="color: var(--cor-primaria);"></i> Novo Produto</h2>
+                <button class="btn-close-modal" onclick="fecharModal()">&times;</button>
+            </div>
+
+            <form id="form-produto">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Foto do Produto (Opcional)</label>
+                        <div class="upload-area">
+                            <label for="upload-foto" class="upload-content" id="upload-conteudo-padrao">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <p>Clique para escolher uma imagem</p>
+                            </label>
+                            <img src="" id="img-preview" alt="Pré-visualização">
+                            <button type="button" class="btn-limpar-foto" id="btn-limpar" title="Remover Foto">&times;</button>
+                            <input type="file" id="upload-foto" class="input-file-escondido" accept="image/png, image/jpeg">
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Nome do Produto</label>
+                        <input type="text" id="input-nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ID do Produto</label>
+                        <input type="text" id="input-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preço (R$)</label>
+                        <input type="number" id="input-preco" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade</label>
+                        <input type="number" id="input-qtd" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Localização</label>
+                        <select id="input-local">
+                            <option value="Galpão 01">Galpão 01</option>
+                            <option value="Galpão 06">Galpão 06</option>
+                            <option value="Galpão 12">Galpão 12</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Data de Entrada</label>
+                        <input type="datetime-local" id="input-entrada" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data da Última Saída (Opcional)</label>
+                        <input type="datetime-local" id="input-saida">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-salvar">Salvar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <footer>
+        <div id="relogio-fixo"></div>
+    </footer>
+
+    <script>
+        function atualizarRelogio() {
+        const elementoRelogio = document.getElementById('relogio-fixo');
+        const agora = new Date();
+        
+        // Formata a hora para o padrão local (ex: 14:30:45)
+        const horaFormatada = agora.toLocaleTimeString('pt-BR');
+        
+        elementoRelogio.textContent = horaFormatada;
+        }
+
+        // Chama a função imediatamente para não esperar 1 segundo antes de aparecer
+        atualizarRelogio();
+
+        // Atualiza o relógio a cada 1 segundo (1000 ms)
+        setInterval(atualizarRelogio, 1000);
+
+        // Preenche a data de hoje no topo da página
+        document.getElementById('data-topo').textContent = new Date().toLocaleDateString('pt-BR');
+
+        const modal = document.getElementById('modalOverlay');
+        const formProduto = document.getElementById('form-produto');
+        const tabelaProdutos = document.getElementById('tabela-produtos');
+        const modalTitulo = document.getElementById('modal-titulo');
+        const inputPesquisa = document.getElementById('input-pesquisa'); 
+        
+        const inputFile = document.getElementById('upload-foto');
+        const imgPreview = document.getElementById('img-preview');
+        const uploadConteudoPadrao = document.getElementById('upload-conteudo-padrao');
+        const btnLimpar = document.getElementById('btn-limpar');
+        
+        let linhaEmEdicao = null; 
+        let imagemCarregadaBase64 = null; 
+
+        // FUNÇÃO PARA PEGAR DATA ATUAL FORMATADA PARA O INPUT (YYYY-MM-DDTHH:MM)
+        function pegarDataHoraAtual() {
+            const agora = new Date();
+            const offset = agora.getTimezoneOffset() * 60000;
+            return new Date(agora - offset).toISOString().slice(0, 16);
+        }
+
+        // FUNÇÃO PARA FORMATAR DATA PARA EXIBIÇÃO NA TABELA (DD/MM/YYYY HH:MM)
+        function formatarDataVisao(dataString) {
+            if (!dataString) return '-';
+            const partes = dataString.split('T');
+            const dataPartes = partes[0].split('-'); // [YYYY, MM, DD]
+            return `${dataPartes[2]}/${dataPartes[1]}/${dataPartes[0]} ${partes[1]}`;
+        }
+
+        // FUNÇÕES DO MODAL
+        function abrirModalAdicionar() {
+            linhaEmEdicao = null; 
+            formProduto.reset(); 
+            limparPreviewFoto(); 
+            
+            // Preenche automaticamente a data de entrada com a data e hora atual
+            document.getElementById('input-entrada').value = pegarDataHoraAtual();
+            document.getElementById('input-saida').value = '';
+
+            modalTitulo.innerHTML = '<i class="fa-solid fa-box-open" style="color: var(--cor-primaria);"></i> Novo Produto';
+            modal.style.display = 'flex';
+        }
+
+        function fecharModal() { modal.style.display = 'none'; }
+        window.onclick = function(event) { if (event.target == modal) fecharModal(); }
+
+        // LÓGICA DE UPLOAD
+        inputFile.addEventListener('change', function(event) {
+            const arquivo = event.target.files[0]; 
+            if (arquivo) {
+                if (arquivo.size > 2 * 1024 * 1024) {
+                    alert('A imagem é muito grande! Escolha uma de até 2MB.');
+                    inputFile.value = '';
+                    return;
+                }
+                const leitor = new FileReader(); 
+                leitor.onload = function(e) {
+                    imagemCarregadaBase64 = e.target.result; 
+                    imgPreview.src = imagemCarregadaBase64; 
+                    imgPreview.style.display = 'block'; 
+                    uploadConteudoPadrao.style.display = 'none'; 
+                }
+                leitor.readAsDataURL(arquivo);
+            }
+        });
+
+        btnLimpar.addEventListener('click', limparPreviewFoto);
+        function limparPreviewFoto() {
+            inputFile.value = ''; 
+            imgPreview.src = ''; 
+            imgPreview.style.display = 'none'; 
+            uploadConteudoPadrao.style.display = 'flex'; 
+            imagemCarregadaBase64 = null; 
+        }
+
+        // SALVAR DADOS
+        formProduto.addEventListener('submit', function(event) {
+            event.preventDefault(); 
+
+            const nome = document.getElementById('input-nome').value;
+            const id = document.getElementById('input-id').value;
+            const preco = parseFloat(document.getElementById('input-preco').value).toFixed(2);
+            const qtd = parseInt(document.getElementById('input-qtd').value);
+            const local = document.getElementById('input-local').value;
+            const entrada = document.getElementById('input-entrada').value;
+            const saida = document.getElementById('input-saida').value;
+
+            let badgeClass = qtd <= 5 ? 'badge-alerta' : 'badge-normal';
+            let imagemFinal = imagemCarregadaBase64 ? imagemCarregadaBase64 : 'https://via.placeholder.com/40';
+
+            const entradaFormatada = formatarDataVisao(entrada);
+            const saidaFormatada = formatarDataVisao(saida);
+
+            if (linhaEmEdicao === null) {
+                const novaLinha = document.createElement('tr');
+                // Salva a data real (YYYY-MM-DD...) em atributos ocultos 'data-' para facilitar a edição depois
+                novaLinha.setAttribute('data-entrada', entrada);
+                novaLinha.setAttribute('data-saida', saida);
+                novaLinha.innerHTML = `
+                    <td><img src="${imagemFinal}" class="img-produto" alt="Foto"></td>
+                    <td class="td-id"><strong>${id}</strong></td>
+                    <td class="td-nome">${nome}</td>
+                    <td class="td-preco">R$ ${preco.replace('.', ',')}</td>
+                    <td class="td-qtd"><span class="badge ${badgeClass}">${qtd} un.</span></td>
+                    <td class="td-local">${local}</td>
+                    <td class="td-entrada td-data">${entradaFormatada}</td>
+                    <td class="td-saida td-data">${saidaFormatada}</td>
+                    <td class="coluna-acoes">
+                        <button class="btn-icon btn-editar" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn-icon btn-excluir" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tabelaProdutos.appendChild(novaLinha);
+            } else {
+                linhaEmEdicao.setAttribute('data-entrada', entrada);
+                linhaEmEdicao.setAttribute('data-saida', saida);
+                linhaEmEdicao.querySelector('.img-produto').src = imagemFinal;
+                linhaEmEdicao.querySelector('.td-id').innerHTML = `<strong>${id}</strong>`;
+                linhaEmEdicao.querySelector('.td-nome').textContent = nome;
+                linhaEmEdicao.querySelector('.td-preco').textContent = `R$ ${preco.replace('.', ',')}`;
+                linhaEmEdicao.querySelector('.td-qtd').innerHTML = `<span class="badge ${badgeClass}">${qtd} un.</span>`;
+                linhaEmEdicao.querySelector('.td-local').textContent = local;
+                linhaEmEdicao.querySelector('.td-entrada').textContent = entradaFormatada;
+                linhaEmEdicao.querySelector('.td-saida').textContent = saidaFormatada;
+            }
+            
+            inputPesquisa.value = '';
+            filtrarTabela();
+            fecharModal();
+        });
+
+        // EDITAR E EXCLUIR
+        tabelaProdutos.addEventListener('click', function(event) {
+            const botao = event.target.closest('button');
+            if (!botao) return;
+            const linha = botao.closest('tr');
+
+            if (botao.classList.contains('btn-excluir')) {
+                if (confirm('Tem certeza que deseja excluir este produto?')) linha.remove();
+            }
+
+            if (botao.classList.contains('btn-editar')) {
+                linhaEmEdicao = linha;
+                
+                const fotoAtualSrc = linha.querySelector('.img-produto').src;
+                const idAtual = linha.querySelector('.td-id').innerText;
+                const nomeAtual = linha.querySelector('.td-nome').innerText;
+                const precoAtual = linha.querySelector('.td-preco').innerText.replace('R$ ', '').replace(',', '.');
+                const qtdAtual = linha.querySelector('.td-qtd').innerText.replace(' un.', '');
+                const localAtual = linha.querySelector('.td-local').innerText;
+                const entradaAtual = linha.getAttribute('data-entrada');
+                const saidaAtual = linha.getAttribute('data-saida');
+
+                if (fotoAtualSrc && !fotoAtualSrc.includes('via.placeholder.com')) {
+                    imagemCarregadaBase64 = fotoAtualSrc;
+                    imgPreview.src = fotoAtualSrc;
+                    imgPreview.style.display = 'block';
+                    uploadConteudoPadrao.style.display = 'none';
+                } else {
+                    limparPreviewFoto();
+                }
+
+                document.getElementById('input-id').value = idAtual;
+                document.getElementById('input-nome').value = nomeAtual;
+                document.getElementById('input-preco').value = precoAtual;
+                document.getElementById('input-qtd').value = qtdAtual;
+                document.getElementById('input-local').value = localAtual;
+                document.getElementById('input-entrada').value = entradaAtual || '';
+                document.getElementById('input-saida').value = saidaAtual || '';
+
+                modalTitulo.innerHTML = '<i class="fa-solid fa-pen-to-square" style="color: var(--cor-sucesso);"></i> Editar Produto';
+                modal.style.display = 'flex';
+            }
+        });
+
+        // BARRA DE PESQUISA
+        function filtrarTabela() {
+            const textoBuscado = inputPesquisa.value.toLowerCase();
+            const linhas = tabelaProdutos.querySelectorAll('tr');
+
+            linhas.forEach(function(linha) {
+                const idProduto = linha.querySelector('.td-id').textContent.toLowerCase();
+                const nomeProduto = linha.querySelector('.td-nome').textContent.toLowerCase();
+                const localProduto = linha.querySelector('.td-local').textContent.toLowerCase();
+
+                if (idProduto.includes(textoBuscado) || nomeProduto.includes(textoBuscado) || localProduto.includes(textoBuscado)) {
+                    linha.style.display = ''; 
+                } else {
+                    linha.style.display = 'none'; 
+                }
+            });
+        }
+
+        inputPesquisa.addEventListener('input', filtrarTabela);
+    </script>
+</body>
+</html>
