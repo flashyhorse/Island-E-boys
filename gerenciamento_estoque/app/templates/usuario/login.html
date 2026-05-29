@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gerenciamento de Estoque</title>
+    <style>
+        :root {
+            --cor-primaria: #f47b36;
+            --cor-fundo: #f8f9fa;
+            --cor-texto: #333333;
+            --cor-borda: #dddddd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background-color: var(--cor-primaria);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .topbar h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background-color: white;
+            width: 100%;
+            max-width: 400px;
+            padding: 40px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .auth-card h2 {
+            margin-bottom: 25px;
+            color: var(--cor-texto);
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--cor-borda);
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--cor-primaria);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            margin-top: 10px;
+            background-color: var(--cor-primaria);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .toggle-text {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .toggle-text a {
+            color: var(--cor-primaria);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .toggle-text a:hover {
+            text-decoration: underline;
+        }
+
+        .mensagem-erro {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+            border-radius: 4px;
+            padding: 10px 14px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <h1>Gerenciamento de Estoque</h1>
+    </header>
+
+    <div class="container">
+        <div class="auth-card">
+            <h2>Acesse sua conta</h2>
+
+            {% if erro %}
+                <div class="mensagem-erro">{{ erro }}</div>
+            {% endif %}
+
+            <form action="{{ url_for('usuario.login') }}" method="POST">
+                <div class="input-group">
+                    <label for="login">Login</label>
+                    <input type="text" id="login" name="login" placeholder="Digite seu login" required>
+                </div>
+                <div class="input-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="btn">Entrar</button>
+            </form>
+
+            <p class="toggle-text">Não possui uma conta? <a href="{{ url_for('usuario.cadastro') }}">Cadastre-se</a></p>
+        </div>
+    </div>
+
+</body>
+</html>
