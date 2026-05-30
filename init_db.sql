@@ -35,10 +35,10 @@ CREATE TABLE produtos (
         REFERENCES fornecedores(id_fornecedor)
 );
 
-CREATE TABLE usuarios (
+CREATE TABLE usuario (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    login VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(50) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
     perfil ENUM('ADMIN', 'OPERADOR') NOT NULL
 );

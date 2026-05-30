@@ -2,5 +2,5 @@ class Config:
     HOST = 'localhost'
     USUARIO = 'root'
     SENHA = ''
-    BANCO = 'estoque_db'
+    BANCO = 'gerenciamento_estoque'
     SECRET_KEY = 'chave_secreta_aqui'
