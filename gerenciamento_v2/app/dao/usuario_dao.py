@@ -1,3 +1,4 @@
+import bcrypt
 from app.dao.db_connection import get_connection
 
 class UsuarioDAO:
@@ -5,9 +6,14 @@ class UsuarioDAO:
     def inserir(self, usuario):
         conn = get_connection()
         try:
+            senha_hash = bcrypt.hashpw(
+                usuario.senha.encode('utf-8'),
+                bcrypt.gensalt()
+            ).decode('utf-8')
+
             cursor = conn.cursor()
             sql = "INSERT INTO usuario (nome, email, senha, perfil) VALUES (%s, %s, %s, %s)"
-            cursor.execute(sql, (usuario.nome, usuario.email, usuario.senha, usuario.perfil))
+            cursor.execute(sql, (usuario.nome, usuario.email, senha_hash, usuario.perfil))
             conn.commit()
             return True
         except Exception as e:
@@ -30,3 +36,9 @@ class UsuarioDAO:
         finally:
             cursor.close()
             conn.close()
+
+    def verificar_senha(self, senha_digitada, senha_hash):
+        return bcrypt.checkpw(
+            senha_digitada.encode('utf-8'),
+            senha_hash.encode('utf-8')
+        )
