@@ -38,7 +38,7 @@ def autenticar():
 
     usuario = dao.buscar_por_email(email)
 
-    if usuario and usuario['senha'] == senha:
+    if usuario and dao.verificar_senha(senha, usuario['senha']):
         return redirect(url_for('usuario.menu'))
     else:
         return render_template('usuario/login.html', erro='Email ou senha incorretos.')
