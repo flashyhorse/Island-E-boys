@@ -1,3 +1,4 @@
+
 from flask import Blueprint, render_template, request, redirect, url_for
 from app.models.usuario import Usuario
 from app.dao.usuario_dao import UsuarioDAO
@@ -45,4 +46,4 @@ def autenticar():
 
 @usuario_bp.route('/menu')
 def menu():
-    return render_template('index.html')
+    return redirect(url_for('produto.listar'))

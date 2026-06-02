@@ -8,4 +8,7 @@ def create_app():
     from app.controllers.usuario_controller import usuario_bp
     app.register_blueprint(usuario_bp)
 
+    from app.controllers.produto_controller import produto_bp
+    app.register_blueprint(produto_bp)
+
     return app
