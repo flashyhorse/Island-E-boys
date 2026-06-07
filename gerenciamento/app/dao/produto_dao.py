@@ -48,3 +48,35 @@ class ProdutoDAO:
         finally:
             cursor.close()
             conn.close()
+    def excluir(self, id_produto):
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM entradas_estoque WHERE id_produto = %s", (id_produto,))
+            cursor.execute("DELETE FROM saidas_estoque WHERE id_produto = %s", (id_produto,))
+            cursor.execute("DELETE FROM produtos WHERE id_produto = %s", (id_produto,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Erro ao excluir produto: {e}")
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+ 
+    def atualizar(self, produto):
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            sql = """UPDATE produtos SET nome=%s, preco=%s, quantidade_estoque=%s, localizacao=%s
+                     WHERE id_produto=%s"""
+            cursor.execute(sql, (produto.nome, produto.preco, produto.quantidade_estoque,
+                                 produto.localizacao, produto.id_produto))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Erro ao atualizar produto: {e}")
+            return False
+        finally:
+            cursor.close()
+            conn.close()
