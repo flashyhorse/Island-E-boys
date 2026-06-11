@@ -278,7 +278,13 @@
  
   <header>
     <span>Gerenciamento de Estoque</span>
-    <span>{{ session['usuario_nome'] }} ({{ session['usuario_perfil'] }}) | <span id="data-topo"></span></span>
+    <span style="display:flex; align-items:center; gap:16px;">
+      <span>{{ session['usuario_nome'] }} ({{ session['usuario_perfil'] }}) | <span id="data-topo"></span></span>
+      <a href="{{ url_for('usuario.logout') }}" style="color:white; font-size:13px; font-weight:600; text-decoration:none; background:rgba(0,0,0,0.2); padding:6px 12px; border-radius:5px; display:flex; align-items:center; gap:6px; transition:background 0.2s;"
+         onmouseover="this.style.background='rgba(0,0,0,0.35)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+        <i class="fas fa-right-from-bracket"></i> Sair
+      </a>
+    </span>
   </header>
  
   <div class="toolbar">
