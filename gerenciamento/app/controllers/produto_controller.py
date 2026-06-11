@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from app.models.produto import Produto
 from app.dao.produto_dao import ProdutoDAO
 from app.dao.estoque_dao import EstoqueDAO
-from app.auth import login_requerido, somente_admin
+from app.auth import login_requerido, somente_admin, somente_admin_ou_operador
 
 produto_bp = Blueprint('produto', __name__)
 dao = ProdutoDAO()
@@ -16,14 +16,14 @@ def listar():
     return render_template('index.html', produtos=produtos, perfil=perfil)
 
 @produto_bp.route('/produtos/saida/<int:id_produto>', methods=['POST'])
-@somente_admin
+@somente_admin_ou_operador
 def registrar_saida(id_produto):
     quantidade = int(request.form.get('quantidade', 1))
     estoque_dao.registrar_saida(id_produto, quantidade)
     return redirect(url_for('produto.listar'))
 
 @produto_bp.route('/produtos/cadastrar', methods=['POST'])
-@somente_admin
+@somente_admin_ou_operador
 def cadastrar():
     nome        = request.form['nome']
     preco       = request.form['preco']
