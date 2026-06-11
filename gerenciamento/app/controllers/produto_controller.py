@@ -1,24 +1,35 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session, abort
 from app.models.produto import Produto
 from app.dao.produto_dao import ProdutoDAO
 from app.dao.estoque_dao import EstoqueDAO
+from app.auth import login_requerido, somente_admin
 
 produto_bp = Blueprint('produto', __name__)
 dao = ProdutoDAO()
 estoque_dao = EstoqueDAO()
 
 @produto_bp.route('/produtos')
+@login_requerido
 def listar():
     produtos = dao.listar()
-    return render_template('index.html', produtos=produtos)
+    perfil = session.get('usuario_perfil')
+    return render_template('index.html', produtos=produtos, perfil=perfil)
+
+@produto_bp.route('/produtos/saida/<int:id_produto>', methods=['POST'])
+@somente_admin
+def registrar_saida(id_produto):
+    quantidade = int(request.form.get('quantidade', 1))
+    estoque_dao.registrar_saida(id_produto, quantidade)
+    return redirect(url_for('produto.listar'))
 
 @produto_bp.route('/produtos/cadastrar', methods=['POST'])
+@somente_admin
 def cadastrar():
-    nome       = request.form['nome']
-    preco      = request.form['preco']
-    quantidade = int(request.form['quantidade'])
+    nome        = request.form['nome']
+    preco       = request.form['preco']
+    quantidade  = int(request.form['quantidade'])
     localizacao = request.form['localizacao']
-    descricao  = request.form.get('descricao') or None
+    descricao   = request.form.get('descricao') or None
 
     if not nome or not preco or not quantidade or not localizacao:
         return redirect(url_for('produto.listar'))
@@ -30,18 +41,15 @@ def cadastrar():
         estoque_dao.registrar_entrada(id_produto, quantidade)
 
     return redirect(url_for('produto.listar'))
+
 @produto_bp.route('/produtos/excluir/<int:id_produto>', methods=['POST'])
+@somente_admin
 def excluir(id_produto):
     dao.excluir(id_produto)
     return redirect(url_for('produto.listar'))
- 
-@produto_bp.route('/produtos/saida/<int:id_produto>', methods=['POST'])
-def registrar_saida(id_produto):
-    quantidade = int(request.form.get('quantidade', 1))
-    estoque_dao.registrar_saida(id_produto, quantidade)
-    return redirect(url_for('produto.listar'))
 
 @produto_bp.route('/produtos/editar/<int:id_produto>', methods=['POST'])
+@somente_admin
 def editar(id_produto):
     nome        = request.form['nome']
     preco       = request.form['preco']

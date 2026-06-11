@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from config import Config
 
 def create_app():
@@ -10,5 +10,9 @@ def create_app():
 
     from app.controllers.produto_controller import produto_bp
     app.register_blueprint(produto_bp)
+
+    @app.errorhandler(403)
+    def acesso_negado(e):
+        return render_template('403.html'), 403
 
     return app

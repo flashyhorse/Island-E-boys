@@ -278,7 +278,7 @@
  
   <header>
     <span>Gerenciamento de Estoque</span>
-    <span>Admin | <span id="data-topo"></span></span>
+    <span>{{ session['usuario_nome'] }} ({{ session['usuario_perfil'] }}) | <span id="data-topo"></span></span>
   </header>
  
   <div class="toolbar">
@@ -286,9 +286,11 @@
       <i class="fas fa-search"></i>
       <input type="text" id="input-pesquisa" placeholder="Pesquisar ID, Produto ou Local...">
     </div>
+    {% if perfil == 'ADMIN' %}
     <button class="btn-add" onclick="abrirModalNovo()">
       <i class="fas fa-plus"></i> Adicionar Produto
     </button>
+    {% endif %}
   </div>
  
   <div class="table-wrap">
@@ -325,6 +327,7 @@
           <td class="td-data">{{ p.data_entrada.strftime('%d/%m/%Y %H:%M') if p.data_entrada else '-' }}</td>
           <td class="td-data">{{ p.data_saida.strftime('%d/%m/%Y %H:%M') if p.data_saida else '-' }}</td>
           <td class="acoes">
+            {% if perfil == 'ADMIN' %}
             <button class="btn-editar" title="Editar"
               data-id="{{ p.id_produto }}"
               data-nome="{{ p.nome }}"
@@ -339,6 +342,9 @@
               onclick="abrirModalSaida({{ p.id_produto }}, '{{ p.nome }}', {{ p.quantidade_estoque }})">
               <i class="fas fa-arrow-right-from-bracket"></i></button>
             <button class="btn-excluir" title="Excluir" onclick="excluirProduto({{ p.id_produto }})"><i class="fas fa-trash-can"></i></button>
+            {% else %}
+            <span style="color: #ccc; font-size: 13px;">— sem ações —</span>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

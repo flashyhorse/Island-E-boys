@@ -1,5 +1,4 @@
-
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, session
 from app.models.usuario import Usuario
 from app.dao.usuario_dao import UsuarioDAO
 
@@ -12,9 +11,9 @@ def cadastro():
 
 @usuario_bp.route('/cadastro', methods=['POST'])
 def cadastrar():
-    nome  = request.form['nome']
-    email = request.form['email']
-    senha = request.form['senha']
+    nome   = request.form['nome']
+    email  = request.form['email']
+    senha  = request.form['senha']
     perfil = request.form['perfil']
 
     if not nome or not email or not senha or not perfil:
@@ -24,7 +23,7 @@ def cadastrar():
     sucesso = dao.inserir(usuario)
 
     if sucesso:
-        return redirect(url_for('usuario.menu'))
+        return redirect(url_for('usuario.login'))
     else:
         return render_template('usuario/cadastro.html', erro='Erro ao cadastrar. Tente novamente.')
 
@@ -40,9 +39,17 @@ def autenticar():
     usuario = dao.buscar_por_email(email)
 
     if usuario and dao.verificar_senha(senha, usuario['senha']):
-        return redirect(url_for('usuario.menu'))
+        session['usuario_id']   = usuario['id_usuario']
+        session['usuario_nome'] = usuario['nome']
+        session['usuario_perfil'] = usuario['perfil']   # 'ADMIN' ou 'OPERADOR'
+        return redirect(url_for('produto.listar'))
     else:
         return render_template('usuario/login.html', erro='Email ou senha incorretos.')
+
+@usuario_bp.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('usuario.login'))
 
 @usuario_bp.route('/menu')
 def menu():
