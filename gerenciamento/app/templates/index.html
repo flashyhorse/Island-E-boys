@@ -133,7 +133,7 @@
     .badge-normal { background: var(--sucesso-bg); color: var(--sucesso-cor); }
     .badge-alerta { background: var(--alerta-bg); color: var(--alerta-cor); }
  
-    .acoes { display: flex; gap: 10px; }
+    .acoes { display: flex; gap: 10px; align-items: center; }
     .acoes button {
       background: none;
       border: none;
@@ -143,6 +143,7 @@
       transition: color 0.2s, transform 0.2s;
     }
     .acoes button.btn-editar:hover { color: var(--sucesso-cor); transform: scale(1.1); }
+    .acoes button.btn-saida:hover  { color: var(--primaria);    transform: scale(1.1); }
     .acoes button.btn-excluir:hover { color: #c0392b; transform: scale(1.1); }
  
     /* RELÓGIO */
@@ -308,7 +309,12 @@
         {% for p in produtos %}
         <tr data-entrada="{{ p.data_entrada }}" data-saida="{{ p.data_saida or '' }}">
           <td><strong>{{ '%04d' % p.id_produto }}</strong></td>
-          <td>{{ p.nome }}</td>
+         <td>
+            {{ p.nome }}
+            {% if p.descricao %}
+              <br><small style="color: #999; font-size: 0.78em;">{{ p.descricao }}</small>
+            {% endif %}
+          </td>
           <td>R$ {{ '%.2f'|format(p.preco|float)|replace('.', ',') }}</td>
           <td>
             <span class="badge {{ 'badge-alerta' if p.quantidade_estoque <= 5 else 'badge-normal' }}">
@@ -325,9 +331,13 @@
               data-preco="{{ p.preco }}"
               data-qtd="{{ p.quantidade_estoque }}"
               data-local="{{ p.localizacao }}"
+              data-descricao="{{ p.descricao or '' }}"
               data-entrada="{{ p.data_entrada.strftime('%Y-%m-%dT%H:%M') if p.data_entrada else '' }}"
               data-saida="{{ p.data_saida.strftime('%Y-%m-%dT%H:%M') if p.data_saida else '' }}"
               onclick="abrirModalEditar(this)"><i class="fas fa-pen-to-square"></i></button>
+            <button class="btn-saida" title="Registrar Saída"
+              onclick="abrirModalSaida({{ p.id_produto }}, '{{ p.nome }}', {{ p.quantidade_estoque }})">
+              <i class="fas fa-arrow-right-from-bracket"></i></button>
             <button class="btn-excluir" title="Excluir" onclick="excluirProduto({{ p.id_produto }})"><i class="fas fa-trash-can"></i></button>
           </td>
         </tr>
@@ -372,11 +382,7 @@
           <!-- LOCALIZAÇÃO -->
           <div class="form-group">
             <label>Localização</label>
-            <select id="input-local" name="localizacao">
-              <option value="Galpão 01">Galpão 01</option>
-              <option value="Galpão 06">Galpão 06</option>
-              <option value="Galpão 12">Galpão 12</option>
-            </select>
+            <input type="text" id="input-local" name="localizacao" placeholder="Ex: Galpão 01">
           </div>
  
           <!-- DATA ENTRADA -->
@@ -384,13 +390,13 @@
             <label>Data de Entrada</label>
             <input type="datetime-local" id="input-entrada" name="data_entrada" required>
           </div>
- 
-          <!-- DATA SAÍDA -->
+
+          <!-- DESCRIÇÃO -->
           <div class="form-group full-width">
-            <label>Data de Saída (Opcional)</label>
-            <input type="datetime-local" id="input-saida" name="data_saida">
+            <label>Descrição (Opcional)</label>
+            <input type="text" id="input-descricao" name="descricao" placeholder="Ex: Parafuso de aço inox 6mm">
           </div>
- 
+
         </div>
  
         <div id="msg-erro" class="msg-erro"></div>
@@ -404,6 +410,42 @@
     </div>
   </div>
  
+  <!-- MODAL DE SAÍDA -->
+  <div class="modal-overlay" id="modalSaidaOverlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-saida-titulo">
+          <i class="fas fa-arrow-right-from-bracket" style="color: var(--primaria);"></i> Registrar Saída
+        </h2>
+        <button class="btn-fechar" onclick="fecharModalSaida()">&times;</button>
+      </div>
+
+      <form id="form-saida" method="POST">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Produto</label>
+            <input type="text" id="saida-nome" disabled style="background:#f8fafc; color:#555;">
+          </div>
+          <div class="form-group full-width">
+            <label>Quantidade disponível em estoque</label>
+            <input type="text" id="saida-estoque-atual" disabled style="background:#f8fafc; color:#555;">
+          </div>
+          <div class="form-group full-width">
+            <label>Quantidade a retirar</label>
+            <input type="number" id="saida-qtd" name="quantidade" min="1" required placeholder="Ex: 2">
+          </div>
+        </div>
+        <div id="msg-erro-saida" class="msg-erro"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancelar" onclick="fecharModalSaida()">Cancelar</button>
+          <button type="submit" class="btn-salvar">
+            <i class="fas fa-check"></i> Confirmar Saída
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="clock" id="clock">00:00:00</div>
  
   <script>
@@ -442,15 +484,14 @@
       const qtd     = btn.dataset.qtd;
       const local   = btn.dataset.local;
       const entrada = btn.dataset.entrada;
-      const saida   = btn.dataset.saida;
       document.getElementById('form-produto').action = `/produtos/editar/${id}`;
       document.getElementById('input-id').value = id;
       document.getElementById('input-nome').value = nome;
       document.getElementById('input-preco').value = preco;
       document.getElementById('input-qtd').value = qtd;
       document.getElementById('input-local').value = local;
+      document.getElementById('input-descricao').value = btn.dataset.descricao || '';
       document.getElementById('input-entrada').value = entrada;
-      document.getElementById('input-saida').value = saida;
       document.getElementById('modal-titulo').innerHTML =
         '<i class="fas fa-pen-to-square" style="color:var(--primaria)"></i> Editar Produto';
       overlay.classList.add('ativo');
@@ -472,6 +513,45 @@
         linha.style.display = linha.textContent.toLowerCase().includes(termo) ? '' : 'none';
       });
     });
+    // MODAL DE SAÍDA
+    const overlaySaida = document.getElementById('modalSaidaOverlay');
+
+    function abrirModalSaida(id, nome, estoqueAtual) {
+      document.getElementById('saida-nome').value = nome;
+      document.getElementById('saida-estoque-atual').value = estoqueAtual + ' un.';
+      document.getElementById('saida-qtd').value = '';
+      document.getElementById('saida-qtd').max = estoqueAtual;
+      document.getElementById('form-saida').action = `/produtos/saida/${id}`;
+      document.getElementById('msg-erro-saida').classList.remove('visivel');
+      overlaySaida.classList.add('ativo');
+    }
+
+    function fecharModalSaida() {
+      overlaySaida.classList.remove('ativo');
+    }
+
+    overlaySaida.addEventListener('click', function(e) {
+      if (e.target === overlaySaida) fecharModalSaida();
+    });
+
+    document.getElementById('form-saida').addEventListener('submit', function(e) {
+      const qtd = parseInt(document.getElementById('saida-qtd').value);
+      const max = parseInt(document.getElementById('saida-qtd').max);
+      const erro = document.getElementById('msg-erro-saida');
+      if (!qtd || qtd < 1) {
+        e.preventDefault();
+        erro.textContent = 'Informe uma quantidade válida.';
+        erro.classList.add('visivel');
+        return;
+      }
+      if (qtd > max) {
+        e.preventDefault();
+        erro.textContent = `Quantidade maior que o estoque disponível (${max} un.).`;
+        erro.classList.add('visivel');
+        return;
+      }
+    });
+
     // EXCLUIR PRODUTO
     function excluirProduto(id) {
       if (!confirm('Tem certeza que deseja excluir este produto?')) return;

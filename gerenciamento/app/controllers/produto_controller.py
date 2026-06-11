@@ -35,13 +35,20 @@ def excluir(id_produto):
     dao.excluir(id_produto)
     return redirect(url_for('produto.listar'))
  
+@produto_bp.route('/produtos/saida/<int:id_produto>', methods=['POST'])
+def registrar_saida(id_produto):
+    quantidade = int(request.form.get('quantidade', 1))
+    estoque_dao.registrar_saida(id_produto, quantidade)
+    return redirect(url_for('produto.listar'))
+
 @produto_bp.route('/produtos/editar/<int:id_produto>', methods=['POST'])
 def editar(id_produto):
     nome        = request.form['nome']
     preco       = request.form['preco']
     quantidade  = int(request.form['quantidade'])
     localizacao = request.form['localizacao']
- 
-    produto = Produto(nome, preco, quantidade, localizacao, id_produto=id_produto)
+    descricao   = request.form.get('descricao') or None
+
+    produto = Produto(nome, preco, quantidade, localizacao, descricao, id_produto=id_produto)
     dao.atualizar(produto)
     return redirect(url_for('produto.listar'))
